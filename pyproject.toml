@@ -1,0 +1,54 @@
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gaelach"
+version = "0.1.0"
+description = "A siuba alternative for dplyr-flavored pandas functions and extended methods"
+readme = {file = "README.md", content-type = "text/markdown"}
+requires-python = ">=3.8"
+
+authors = [
+    {name = "Connor Burruss", email = "cburru2@gmail.com"},
+]
+
+license = "MIT"
+
+license-files = [
+    "LICENSE*"
+]
+
+classifiers = [
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Operating System :: OS Independent",
+]
+
+dependencies = [
+    "pandas>=2.3.3",
+    "numpy>=1.16.0",
+    "pyarrow>=10.0.0"
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0", 
+    "black>=23.0.0",
+    "ruff>=0.1.0",
+]
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.package-data]
+"gaelach" = ["data/*.parquet", "*.parquet"]
+
+[tool.setuptools.packages.find]
+where = ["."]  
+exclude = ["hex*", "hex", "tests*", "docs*"]  
