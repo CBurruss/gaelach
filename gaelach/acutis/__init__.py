@@ -8,5 +8,6 @@ from gaelach.acutis.affiche import affiche             # Imports both the functi
 from gaelach.acutis.count_na import count_na
 from gaelach.acutis.count_table import count_table
 from gaelach.acutis.pasteurize import pasteurize
+from gaelach.acutis.glimpse import glimpse 
 
-__all__ = ['affiche', 'count_na', 'count_table', 'pasteurize']
+__all__ = ['affiche', 'count_na', 'count_table', 'pasteurize', 'glimpse']

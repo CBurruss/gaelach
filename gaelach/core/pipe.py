@@ -23,19 +23,6 @@ class MethodCall:
         method = getattr(df, self.method_name)
         return method(*self.args, **self.kwargs)
 
-class _:
-    """
-    Placeholder for DataFrame method calls in pipes.
-    
-    Usage: df >> _.method_name(args)
-    """
-    def __getattr__(self, name):
-        def method_caller(*args, **kwargs):
-            return MethodCall(name, args, kwargs)
-        return method_caller
-
-_ = _()
-
 def _pipe_rshift(self, other):
     """
     Pipe operator for Pandas DataFrames.

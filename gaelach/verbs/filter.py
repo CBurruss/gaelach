@@ -1,4 +1,5 @@
-from gaelach.core.symbolic import SymbolicAttr, ColumnExpression, BinaryOperation
+from gaelach.core.symbolic import SymbolicAttr, ColumnExpression, BinaryOperation, \
+    ChainedSymbolicAttr
 
 # Define the filter() verb
 def filter(*conditions):
@@ -12,22 +13,21 @@ def filter(*conditions):
     """
     def _filter(df):
         # Evaluate each condition to get boolean Series
+        # Evaluate each condition to get boolean Series
         masks = []
         for condition in conditions:
-            if isinstance(condition, ColumnExpression):
-                masks.append(condition._evaluate(df))
-            elif isinstance(condition, BinaryOperation):
+            if isinstance(condition, (ColumnExpression, BinaryOperation, ChainedSymbolicAttr)):
                 masks.append(condition._evaluate(df))
             else:
                 # Already a boolean Series
                 masks.append(condition)
-        
+
         # Combine all conditions with AND logic
         combined_mask = masks[0]
         for mask in masks[1:]:
             combined_mask = combined_mask & mask
-        
+
         # Use boolean indexing to filter rows
         return df[combined_mask]
-    
+
     return _filter

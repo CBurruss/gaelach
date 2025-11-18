@@ -74,13 +74,13 @@ def is_float(dtype):
     """Check if a Pandas data type is float."""
     return dtype in ["float", "float16", "float32", "float64"]
 
-def is_string(dtype):
-    """Check if a Pandas data type is string."""
-    return dtype == "str" or dtype == "obj"
+def is_object(dtype):
+    """Check if a Pandas data type is object or string."""
+    return dtype == "string" or dtype == "object"
 
 def is_boolean(dtype):
     """Check if a Pandas data type is boolean."""
-    return dtype == "bool"
+    return dtype == "bool" or dtype == "logical"
 
 def is_temporal(dtype):
     """Check if a Pandas data type is date/time related."""

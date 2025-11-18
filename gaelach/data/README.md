@@ -1,3 +1,3 @@
-# Lunar Impact Crater Database (2015) Dataset
+# List of Natural Satellites Dataset
 
-This data is provided by the [Lunar and Planetary Institute](https://www.lpi.usra.edu/scientific-databases/).
+This data was scraped from the [Wikipedia](https://en.wikipedia.org/wiki/List_of_natural_satellites) page on satellites in the Solar system.

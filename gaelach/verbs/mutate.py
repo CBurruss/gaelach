@@ -1,4 +1,4 @@
-from gaelach.core.symbolic import SymbolicAttr, BinaryOperation
+from gaelach.core.symbolic import SymbolicAttr, BinaryOperation, ChainedSymbolicAttr, ColumnExpression
 import pandas as pd
 import re
 import numpy as np
@@ -9,7 +9,7 @@ from gaelach.utils.helpers import (
     is_numeric,
     is_integer,
     is_float,
-    is_string,
+    is_object,
     is_boolean,
     is_temporal,
     is_cat,
@@ -104,6 +104,38 @@ def _resolve_across_columns(cols, all_columns, df=None):
     
     return []
 
+def _evaluate_expression(expr, df):
+    """Helper to evaluate symbolic expressions into actual values."""
+    # Handle callables (like if_else, case_when results)
+    if callable(expr):
+        return expr(df)
+    elif isinstance(expr, ChainedSymbolicAttr):
+        # Start with the base column
+        result = df[expr.name]
+        current = expr
+        operations = []
+        
+        # Collect all operations in the chain
+        while isinstance(current, ChainedSymbolicAttr):
+            operations.append((current.method_name, current.args, current.kwargs))
+            current = current.parent
+        
+        # Apply operations in reverse order
+        for method_name, args, kw in reversed(operations):
+            if hasattr(result, method_name):
+                method = getattr(result, method_name)
+                result = method(*args, **kw)
+        
+        return result
+    elif isinstance(expr, SymbolicAttr):
+        return df[expr.name]
+    elif isinstance(expr, BinaryOperation):
+        return expr._evaluate(df)
+    elif isinstance(expr, ColumnExpression):
+        return expr._evaluate(df)
+    else:
+        return expr
+
 def mutate(*args, _before=None, _after=None, **kwargs):
     """
     Create new columns or modify existing ones.
@@ -163,22 +195,22 @@ def mutate(*args, _before=None, _after=None, **kwargs):
         
         # Apply all the mutations
         for col_name, value in expanded_kwargs.items():
-            # Handle BinaryOperation objects
-            if isinstance(value, BinaryOperation):
-                result[col_name] = value._evaluate(result)
+            # Evaluate the expression first
+            evaluated_value = _evaluate_expression(value, result)
+            
             # Handle lists/arrays by converting to pandas Series
-            elif isinstance(value, (list, np.ndarray)):
-                if len(value) != len(df):
-                    raise ValueError(f"Length of values ({len(value)}) must match DataFrame length ({len(df)})")
-                result[col_name] = value
-            elif hasattr(value, '__len__') and not isinstance(value, (str, pd.Series)):
+            if isinstance(evaluated_value, (list, np.ndarray)):
+                if len(evaluated_value) != len(df):
+                    raise ValueError(f"Length of values ({len(evaluated_value)}) must match DataFrame length ({len(df)})")
+                result[col_name] = evaluated_value
+            elif hasattr(evaluated_value, '__len__') and not isinstance(evaluated_value, (str, pd.Series)):
                 # Handle other sequence-like objects
-                if len(value) != len(df):
-                    raise ValueError(f"Length of values ({len(value)}) must match DataFrame length ({len(df)})")
-                result[col_name] = pd.Series(value, index=df.index)
+                if len(evaluated_value) != len(df):
+                    raise ValueError(f"Length of values ({len(evaluated_value)}) must match DataFrame length ({len(df)})")
+                result[col_name] = pd.Series(evaluated_value, index=df.index)
             else:
                 # Handle scalar values, Series, or expressions
-                result[col_name] = value
+                result[col_name] = evaluated_value
         
         # If positioning is specified, reorder columns
         if _before is not None or _after is not None:

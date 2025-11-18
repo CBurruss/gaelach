@@ -43,6 +43,44 @@ class BinaryOperation:
         elif self.operator == '**':
             return left_val ** right_val
 
+class StringAccessor:
+    """String methods accessor for SymbolicAttr"""
+    
+    def __init__(self, symbolic_attr):
+        self._symbolic_attr = symbolic_attr
+    
+    def contains(self, pat, case=True, na=None, regex=True):
+        """Check if pattern is contained in string"""
+        def _evaluate(df):
+            col = df[self._symbolic_attr.name]
+            return col.str.contains(pat, case=case, na=na, regex=regex)
+        
+        # Return a ChainedSymbolicAttr-like object that can be used in conditions
+        result = ChainedSymbolicAttr(self._symbolic_attr, 'str.contains', (pat,), 
+                                     {'case': case, 'na': na, 'regex': regex})
+        result._evaluate = _evaluate
+        return result
+    
+    def lower(self):
+        """Convert strings to lowercase"""
+        def _evaluate(df):
+            col = df[self._symbolic_attr.name]
+            return col.str.lower()
+        
+        result = ChainedSymbolicAttr(self._symbolic_attr, 'str.lower', (), {})
+        result._evaluate = _evaluate
+        return result
+    
+    def upper(self):
+        """Convert strings to uppercase"""
+        def _evaluate(df):
+            col = df[self._symbolic_attr.name]
+            return col.str.upper()
+        
+        result = ChainedSymbolicAttr(self._symbolic_attr, 'str.upper', (), {})
+        result._evaluate = _evaluate
+        return result
+
 class SymbolicAttr:
     """
     Intermediate object returned by _.attribute_name
@@ -51,8 +89,13 @@ class SymbolicAttr:
     """
     def __init__(self, name):
         self.name = name
-        # Don't create a circular reference - store column name instead
+        # Store column name 
         self._column_name = name
+        
+    @property
+    def str(self):
+        """Access string methods"""
+        return StringAccessor(self)
     
     def __call__(self, *args, **kwargs):
         """
@@ -78,13 +121,45 @@ class SymbolicAttr:
         """
         return ColumnRange(self, other)
     
+    def __neg__(self):
+        """
+        Support negation for descending sort.
+    
+        Usage: df >> arrange(-_.column_name)
+        """
+        negated = SymbolicAttr(self.name)
+        negated._is_negated = True
+        negated._original = self.name
+        return negated
+    
     def __getattr__(self, attr):
         """
         Forward attribute access to create chained expressions.
-        
+    
         Instead of delegating to _expr, create a new SymbolicAttr
         that represents the chained operation.
         """
+        # Special handling for custom methods
+        if attr == 'not_in':
+            def not_in_wrapper(values):
+                result = ChainedSymbolicAttr(self, 'not_in', (values,), {})
+                def _evaluate(df):
+                    col_data = df[self.name]
+                    return ~col_data.isin(values)
+                result._evaluate = lambda df: _evaluate(df)
+                return result
+            return not_in_wrapper
+    
+        if attr == 'not_like':
+            def not_like_wrapper(pattern):
+                result = ChainedSymbolicAttr(self, 'not_like', (pattern,), {})
+                def _evaluate(df):
+                    col_data = df[self.name]
+                    return ~col_data.str.contains(pattern)
+                result._evaluate = lambda df: _evaluate(df)
+                return result
+            return not_like_wrapper
+    
         # Create a new SymbolicAttr for the chained operation
         def chained_operation(*args, **kwargs):
             # This will be handled when the expression is evaluated
@@ -168,6 +243,31 @@ class ChainedSymbolicAttr:
         self.method_name = method_name
         self.args = args
         self.kwargs = kwargs
+        
+        # Store the column name for aggregation functions
+        if isinstance(parent, SymbolicAttr):
+            self.name = parent.name
+        elif isinstance(parent, ChainedSymbolicAttr):
+            self.name = parent.name
+        
+        # Find the LAST aggregation function in the chain
+        # Walk through the entire chain to find it
+        self._agg_func = None
+        if method_name in ['count', 'sum', 'mean', 'min', 'max', 'std', 'var', 'first', 'last', 'median']:
+            self._agg_func = method_name
+        elif isinstance(parent, ChainedSymbolicAttr) and hasattr(parent, '_agg_func') and parent._agg_func:
+            # Inherit from parent if we don't have one
+            self._agg_func = parent._agg_func
+    
+    def __getattr__(self, attr):
+        """
+        Allow further chaining of methods.
+        
+        This enables patterns like _.column.astype().mean()
+        """
+        def chained_operation(*args, **kwargs):
+            return ChainedSymbolicAttr(self, attr, args, kwargs)
+        return chained_operation
     
     # Add invert method to select()
     def __invert__(self):
@@ -191,23 +291,47 @@ class ChainedSymbolicAttr:
     def not_in(self, values):
         """
         Check if values are NOT in the given list.
-        
+    
         Inverse of is_in()
-        
+    
         Usage: df >> filter(_.col.not_in([1, 2, 3]))
         """
-        return ~self._expr.is_in(values)
+        result = ChainedSymbolicAttr(self.parent if hasattr(self, 'parent') else self, 'not_in', (values,), {})
+        
+        # Bind the evaluation method to the result object
+        def _evaluate(df):
+            # Get the parent column data
+            if hasattr(result.parent, '_evaluate'):
+                col_data = result.parent._evaluate(df)
+            else:
+                col_data = df[result.parent._name]
+            return ~col_data.isin(values)
     
+        result._evaluate = lambda df: _evaluate(df)
+        return result
+
     # Patch in custom not_like() method
     def not_like(self, pattern):
         """
         Check if string does NOT contain the pattern.
-        
+    
         Inverse of str.contains()
-        
+    
         Usage: df >> filter(_.col.not_like("pattern"))
         """
-        return ~self._expr.str.contains(pattern)
+        result = ChainedSymbolicAttr(self.parent if hasattr(self, 'parent') else self, 'not_like', (pattern,), {})
+    
+        # Bind the evaluation method to the result object
+        def _evaluate(df):
+            # Get the parent column data
+            if hasattr(result.parent, '_evaluate'):
+                col_data = result.parent._evaluate(df)
+            else:
+                col_data = df[result.parent._name]
+            return ~col_data.str.contains(pattern)
+    
+        result._evaluate = lambda df: _evaluate(df)
+        return result
     
     def __add__(self, other):
         """Support + addition"""
@@ -250,6 +374,20 @@ class ChainedSymbolicAttr:
         if isinstance(other, SymbolicAttr):
             other = other._expr
         return self._expr.__pow__(other)
+    
+    def _evaluate(self, df):
+        """Evaluate the chained operation on a DataFrame."""
+        # First, get the parent column data
+        if isinstance(self.parent, SymbolicAttr):
+            col_data = df[self.parent.name]
+        elif isinstance(self.parent, ChainedSymbolicAttr):
+            col_data = self.parent._evaluate(df)
+        else:
+            col_data = self.parent
+    
+        # Then apply the method with args and kwargs
+        method = getattr(col_data, self.method_name)
+        return method(*self.args, **self.kwargs)
     
 # Establish symbolic class for Pandas dataframes
 class Symbolic:
