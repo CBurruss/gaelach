@@ -724,7 +724,6 @@ moons >> mutate(
 ```python
 moons >> group_by(_.parent) \
     >> summarize(avg_orbital_semi_major_axis_km = _.orbital_semi_major_axis_km.mean().round()) \
-    >> _.reset_index() \
     >> affiche()
 ```
 
