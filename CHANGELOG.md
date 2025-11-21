@@ -2,6 +2,14 @@
 
 All notable changes to `gaelach` will be documented in this changelog
 
+## *0.1.1* — 2025-11-20
+
+### Improvements
+- Added extra handling to `pasteurize()` for cleaning object columns
+
+### Fixes
+- `mutate()` statements now allow for string extraction
+
 ## *0.1.0* — 2025-11-18
 
 Initial package release

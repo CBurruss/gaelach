@@ -34,10 +34,18 @@ def pasteurize(df):
     
     # Clean string columns: strip whitespace, replace NA variants, apply title case
     for col in string_cols:
-        df[col] = (df[col]
-                   .str.strip()
-                   .replace(['NA', 'NULL', ''], pd.NA)
-                   .str.title())
+        try:
+            # Only process if we can safely use string methods
+            if df[col].notna().any():  # Check if column has any non-null values
+                df[col] = (df[col]
+                           .astype(str)
+                           .str.strip()
+                           .replace(['NA', 'NULL', 'nan', 'NaN', ''], pd.NA)
+                           .str.title())
+        except (AttributeError, TypeError):
+            # If string operations fail, skip this column
+            print(f"Warning: Could not process column '{col}' with string methods")
+            continue
     
     # Remove empty and duplicate rows
     df = df.dropna(how='all').drop_duplicates()

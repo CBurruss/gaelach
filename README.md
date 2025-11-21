@@ -1,4 +1,4 @@
-# gaelach <img src="./hex/gaelach-hex.png" align="right" width="120" alt="Hexagonal logo for the penguins package" /> 
+# gaelach <img src="./hex/gaelach-hex.png" align="right" width="120" alt="Hexagonal logo for the gaelach package" /> 
 
 a siuba alternative providing extended methods and functions to pandas for tidy data manipulation
 
@@ -56,17 +56,17 @@ As hinted at above, gaelach gains most of its utility from its dplyr-styled func
 11. `unite()` — combine multiple columns into one column
 12. `separate()` — split a column into multiple columns
 13. `bind_cols()` — bind the columns of two DataFrames together
-15. `bind_rows()` — bind the rows of two DataFrames together
-16. `head()` — return first n rows
-17. `tail()` — return last n rows 
-18. `slice()` — select rows by position
-19. `sample()` — return a sample of rows from a DataFrame
-20. `distinct()` — keep only unique rows based on specified columns
-21. `arrange()` — sort rows by column expressions
-22. `relocate()` — reorder columns in a DataFrame
-23. `rename()` — rename columns
-24. `round()` — round numeric columns to specified decimal places
-25. `drop_null()` — remove rows with `null` values
+14. `bind_rows()` — bind the rows of two DataFrames together
+15. `head()` — return first n rows
+16. `tail()` — return last n rows 
+17. `slice()` — select rows by position
+18. `sample()` — return a sample of rows from a DataFrame
+19. `distinct()` — keep only unique rows based on specified columns
+20. `arrange()` — sort rows by column expressions
+21. `relocate()` — reorder columns in a DataFrame
+22. `rename()` — rename columns
+23. `round()` — round numeric columns to specified decimal places
+24. `drop_na()` — remove rows with `NA` values
 
 ### 4. Helper functions
 
@@ -75,6 +75,8 @@ Included are various helper functions to assist in column selection within `sele
      - Supports pattern matching on column names with `starts_with()`, `ends_with()` and `contains()` 
 2. `where()` — for subsetting columns based on one or more conditions
      - Supports `is_boolean`, `is_cat`, `is_float`, `is_integer`, `is_numeric`, `is_string` and `is_temporal` as boolean checks for column data types
+3. `if_else()` and `case_when()` are both available within `mutate()` statements for conditional row assignment
+4. `row_contains()` — returns rows where any column contain given value[s] 
 
 ## Examples
  
@@ -573,7 +575,9 @@ Importantly, `mutate()` allows for applying transformations across multiple colu
 ```python
 cols = ["name", "parent", "discovered_by"]
 
-moons >> mutate(across(cols, lambda x: x.str.upper())) \
+to_upper = lambda x: x.str.upper()
+
+moons >> mutate(across(cols, to_upper)) \
     >> select(*cols) \
     >> head() \
     >> affiche()
@@ -594,7 +598,9 @@ moons >> mutate(across(cols, lambda x: x.str.upper())) \
 We can even use the selector helpers — `starts_with()`, `ends_with()` and `contains()` — within our `across()` call:
 
 ```python
-moons >> mutate(across(ends_with("km|kms"), lambda x: pd.to_numeric(x, errors = "coerce"))) \
+to_numeric = lambda x: pd.to_numeric(x, errors = "coerce")
+
+moons >> mutate(across(ends_with("km|kms"), to_numeric)) \
     >> select(ends_with("km|kms")) \
     >> head() \
     >> affiche()
@@ -615,7 +621,9 @@ moons >> mutate(across(ends_with("km|kms"), lambda x: pd.to_numeric(x, errors = 
 We also have access to the following helper functions within `where()`: `is_numeric`, `is_integer`, `is_float`, `is_object`, `is_boolean`, `is_temporal` and `is_cat`:
 
 ```python
-moons >> mutate(across(where(is_object), lambda x: x.str.lower())) \
+to_lower = lambda x: x.str.lower()
+
+moons >> mutate(across(where(is_object), to_lower)) \
     >> select(where(is_object), ~_.image, ~ends_with("km|kms")) \
     >> head() \
     >> affiche()
@@ -636,7 +644,9 @@ moons >> mutate(across(where(is_object), lambda x: x.str.lower())) \
 `mutate()` also allows for arithmetic operators (e.g. `+`, `*`, `/`) to be used across columns:
 
 ```python
-moons >> mutate(across(contains("year"), lambda x: pd.to_numeric(x, errors = "coerce"))) \
+to_numeric = lambda x: pd.to_numeric(x, errors = "coerce")
+
+moons >> mutate(across(contains("year"), to_numeric)) \
     >> mutate(announcement_lag = _.year_announced - _.discovery_year, 
                 _after = "year_announced") \
     >> select(_.name, _.discovery_year | _.announcement_lag) \
@@ -1344,7 +1354,9 @@ By default, `round()` reduces all numeric columns to two decimal places — wher
 ```python
 cols = ["average_orbital_speed_kms", "sidereal_period_d_r__retrograde"]
 
-moons >> mutate(across(cols, lambda x: pd.to_numeric(x, errors = "coerce"))) \
+to_numeric = lambda x: pd.to_numeric(x, errors = "coerce")
+
+moons >> mutate(across(cols, to_numeric)) \
     >> select(_.name, *cols) \
     >> head() \
     >> round(decimals = 0) \

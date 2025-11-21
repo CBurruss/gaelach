@@ -49,11 +49,11 @@ from gaelach.utils.case_when import case_when
 from gaelach.utils.row_contains import row_contains
     
 # set version
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 # add to primary import 
 __all__ = ['_', 'Symbolic', 'select', 'mutate', 'filter', 'across', 'where', 'is_boolean', 
-           'is_cat', 'is_float', 'is_integer', 'is_numeric', 'is_string', 'is_temporal', 
+           'is_cat', 'is_float', 'is_integer', 'is_numeric', 'is_object', 'is_temporal', 
            'all', 'starts_with', 'ends_with', 'contains', 'affiche', 'count_na', 'count_table',
            'pasteurize', 'glimspe', 'group_by', 'summarize', 'reframe', 'pull', 'join', 
            'pivot_longer', 'pivot_wider', 'unite', 'separate', 'bind_rows', 'bind_cols', 

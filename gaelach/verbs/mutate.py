@@ -122,7 +122,11 @@ def _evaluate_expression(expr, df):
         
         # Apply operations in reverse order
         for method_name, args, kw in reversed(operations):
-            if hasattr(result, method_name):
+            # Check if this is an accessor property (str, dt, cat)
+            if method_name in ['str', 'dt', 'cat'] and len(args) == 0 and len(kw) == 0:
+                # Get the accessor, don't call it
+                result = getattr(result, method_name)
+            elif hasattr(result, method_name):
                 method = getattr(result, method_name)
                 result = method(*args, **kw)
         
@@ -198,19 +202,17 @@ def mutate(*args, _before=None, _after=None, **kwargs):
             # Evaluate the expression first
             evaluated_value = _evaluate_expression(value, result)
             
-            # Handle lists/arrays by converting to pandas Series
-            if isinstance(evaluated_value, (list, np.ndarray)):
-                if len(evaluated_value) != len(df):
-                    raise ValueError(f"Length of values ({len(evaluated_value)}) must match DataFrame length ({len(df)})")
-                result[col_name] = evaluated_value
-            elif hasattr(evaluated_value, '__len__') and not isinstance(evaluated_value, (str, pd.Series)):
-                # Handle other sequence-like objects
-                if len(evaluated_value) != len(df):
-                    raise ValueError(f"Length of values ({len(evaluated_value)}) must match DataFrame length ({len(df)})")
-                result[col_name] = pd.Series(evaluated_value, index=df.index)
+        # Handle lists/arrays by converting to pandas Series
+        if isinstance(evaluated_value, pd.DataFrame):
+            # If extract() returned a DataFrame with one column, use that column
+            if evaluated_value.shape[1] == 1:
+                result[col_name] = evaluated_value.iloc[:, 0]
             else:
-                # Handle scalar values, Series, or expressions
-                result[col_name] = evaluated_value
+                raise ValueError(f"Cannot assign DataFrame with {evaluated_value.shape[1]} columns to single column '{col_name}'")
+        elif isinstance(evaluated_value, (list, np.ndarray)):
+            if len(evaluated_value) != len(df):
+                raise ValueError(f"Length of values ({len(evaluated_value)}) must match DataFrame length ({len(df)})")
+            result[col_name] = evaluated_value
         
         # If positioning is specified, reorder columns
         if _before is not None or _after is not None:

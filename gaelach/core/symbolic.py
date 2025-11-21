@@ -135,10 +135,14 @@ class SymbolicAttr:
     def __getattr__(self, attr):
         """
         Forward attribute access to create chained expressions.
-    
+
         Instead of delegating to _expr, create a new SymbolicAttr
         that represents the chained operation.
         """
+        # Special handling for accessor properties (str, dt, cat)
+        if attr in ['str', 'dt', 'cat']:
+            return ChainedSymbolicAttr(self, attr, (), {})
+    
         # Special handling for custom methods
         if attr == 'not_in':
             def not_in_wrapper(values):
@@ -149,7 +153,7 @@ class SymbolicAttr:
                 result._evaluate = lambda df: _evaluate(df)
                 return result
             return not_in_wrapper
-    
+
         if attr == 'not_like':
             def not_like_wrapper(pattern):
                 result = ChainedSymbolicAttr(self, 'not_like', (pattern,), {})
@@ -159,7 +163,7 @@ class SymbolicAttr:
                 result._evaluate = lambda df: _evaluate(df)
                 return result
             return not_like_wrapper
-    
+
         # Create a new SymbolicAttr for the chained operation
         def chained_operation(*args, **kwargs):
             # This will be handled when the expression is evaluated
@@ -262,9 +266,13 @@ class ChainedSymbolicAttr:
     def __getattr__(self, attr):
         """
         Allow further chaining of methods.
-        
+    
         This enables patterns like _.column.astype().mean()
         """
+        # Special handling for accessor properties
+        if attr in ['str', 'dt', 'cat']:
+            return ChainedSymbolicAttr(self, attr, (), {})
+    
         def chained_operation(*args, **kwargs):
             return ChainedSymbolicAttr(self, attr, args, kwargs)
         return chained_operation
@@ -384,8 +392,18 @@ class ChainedSymbolicAttr:
             col_data = self.parent._evaluate(df)
         else:
             col_data = self.parent
+
+        # Check if this is an accessor (str, dt, cat)
+        if self.method_name in ['str', 'dt', 'cat']:
+            # Return the accessor itself, don't call it
+            return getattr(col_data, self.method_name)
     
-        # Then apply the method with args and kwargs
+        # If col_data is already an accessor, get the method from it
+        if hasattr(col_data, '__class__') and col_data.__class__.__name__ in ['StringMethods', 'DatetimeProperties', 'CategoricalAccessor']:
+            method = getattr(col_data, self.method_name)
+            return method(*self.args, **self.kwargs)
+    
+        # Normal method call
         method = getattr(col_data, self.method_name)
         return method(*self.args, **self.kwargs)
     
@@ -401,9 +419,9 @@ class Symbolic:
     def __getattr__(self, name):
         """
         Intercept attribute access to create SymbolicAttr objects.
-        
+    
         name: The column or method name being referenced
-        
+    
         Returns a SymbolicAttr that can be used as an expression or called as a method
         """
         return SymbolicAttr(name)
