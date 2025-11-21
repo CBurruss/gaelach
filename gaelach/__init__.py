@@ -47,9 +47,11 @@ from gaelach.utils.helpers import starts_with, ends_with, contains, where, is_bo
 from gaelach.utils.if_else import if_else
 from gaelach.utils.case_when import case_when
 from gaelach.utils.row_contains import row_contains
+from gaelach.utils.lambdas import to_lower, to_upper, to_strip, to_title, to_str, to_int, \
+   to_bool, to_date, to_na, to_zero, to_round
     
 # set version
-__version__ = "0.1.1"
+__version__ = "0.2.0"
 
 # add to primary import 
 __all__ = ['_', 'Symbolic', 'select', 'mutate', 'filter', 'across', 'where', 'is_boolean', 
@@ -58,5 +60,7 @@ __all__ = ['_', 'Symbolic', 'select', 'mutate', 'filter', 'across', 'where', 'is
            'pasteurize', 'glimspe', 'group_by', 'summarize', 'reframe', 'pull', 'join', 
            'pivot_longer', 'pivot_wider', 'unite', 'separate', 'bind_rows', 'bind_cols', 
            'arrange', 'distinct', 'head', 'tail', 'drop_na', 'slice', 'sample', 'rename', 
-           'round', 'relocate', 'drop_na', 'if_else', 'case_when', 'row_contains'
+           'round', 'relocate', 'drop_na', 'if_else', 'case_when', 'row_contains', 'to_lower', 
+           'to_upper', 'to_strip', 'to_title', 'to_str', 'to_int', 'to_bool', 'to_date', 'to_na', 
+           'to_zero', 'to_round'
         ]

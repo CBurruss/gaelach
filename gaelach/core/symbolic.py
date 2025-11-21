@@ -92,10 +92,11 @@ class SymbolicAttr:
         # Store column name 
         self._column_name = name
         
-    @property
-    def str(self):
-        """Access string methods"""
-        return StringAccessor(self)
+# Drop this - let pandas handle string methods 
+#     @property
+#     def str(self):
+#         """Access string methods"""
+#         return StringAccessor(self)
     
     def __call__(self, *args, **kwargs):
         """

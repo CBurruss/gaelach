@@ -2,6 +2,20 @@
 
 All notable changes to `gaelach` will be documented in this changelog
 
+## *0.2.0* — 2025-11-20
+
+### Features
+- Added built-in lambdas for `across()` statements!
+  - String transformations:
+      - `to_lower`, `to_upper`, `to_strip`, `to_title`
+  - Type coercion: 
+      - `to_str`, `to_int`, `to_bool`, `to_date`, 
+  - Other: 
+      - `to_na`, `to_zero`, `to_round`
+
+### Improvements
+- `mutate()` statements handle string extraction better
+
 ## *0.1.1* — 2025-11-20
 
 ### Improvements
