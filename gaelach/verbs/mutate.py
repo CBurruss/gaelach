@@ -14,7 +14,7 @@ from gaelach.utils.helpers import (
     is_temporal,
     is_cat,
     all
-)
+) 
 
 # Define Across class (same as before)
 class Across:
@@ -164,11 +164,11 @@ def mutate(*args, _before=None, _after=None, **kwargs):
         # Handle positional Across objects
         for arg in args:
             if isinstance(arg, Across):
-                target_cols = _resolve_across_columns(arg.cols, df.columns, df)
+                target_cols = _resolve_across_columns(arg.cols, result.columns, result)
                 
                 for col_name in target_cols:
                     # Get the pandas Series for this column
-                    col_series = df[col_name]
+                    col_series = result[col_name]
                     # Apply the function
                     result_series = arg.func(col_series)
                     
@@ -182,10 +182,10 @@ def mutate(*args, _before=None, _after=None, **kwargs):
         # Handle keyword arguments (including Across objects)
         for key, value in kwargs.items():
             if isinstance(value, Across):
-                target_cols = _resolve_across_columns(value.cols, df.columns, df)
+                target_cols = _resolve_across_columns(value.cols, result.columns, result)
                 
                 for col_name in target_cols:
-                    col_series = df[col_name]
+                    col_series = result[col_name]
                     result_series = value.func(col_series)
                     
                     if value.names:
@@ -202,17 +202,19 @@ def mutate(*args, _before=None, _after=None, **kwargs):
             # Evaluate the expression first
             evaluated_value = _evaluate_expression(value, result)
             
-        # Handle lists/arrays by converting to pandas Series
-        if isinstance(evaluated_value, pd.DataFrame):
-            # If extract() returned a DataFrame with one column, use that column
-            if evaluated_value.shape[1] == 1:
-                result[col_name] = evaluated_value.iloc[:, 0]
+            # Handle lists/arrays by converting to pandas Series
+            if isinstance(evaluated_value, pd.DataFrame):
+                # If extract() returned a DataFrame with one column, use that column
+                if evaluated_value.shape[1] == 1:
+                    result[col_name] = evaluated_value.iloc[:, 0]
+                else:
+                    raise ValueError(f"Cannot assign DataFrame with {evaluated_value.shape[1]} columns to single column '{col_name}'")
+            elif isinstance(evaluated_value, (list, np.ndarray)):
+                if len(evaluated_value) != len(df):
+                    raise ValueError(f"Length of values ({len(evaluated_value)}) must match DataFrame length ({len(df)})")
+                result[col_name] = evaluated_value
             else:
-                raise ValueError(f"Cannot assign DataFrame with {evaluated_value.shape[1]} columns to single column '{col_name}'")
-        elif isinstance(evaluated_value, (list, np.ndarray)):
-            if len(evaluated_value) != len(df):
-                raise ValueError(f"Length of values ({len(evaluated_value)}) must match DataFrame length ({len(df)})")
-            result[col_name] = evaluated_value
+                result[col_name] = evaluated_value
         
         # If positioning is specified, reorder columns
         if _before is not None or _after is not None:

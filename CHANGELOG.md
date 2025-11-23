@@ -2,6 +2,17 @@
 
 All notable changes to `gaelach` will be documented in this changelog
 
+## *0.2.1* — 2025-11-22
+
+### Features
+- Added `to_float` and `to_cat` to lambda transformer functions
+
+### Imrovements
+- `affiche()` and `glimpse()` have extra data type abbreviations
+
+### Fixes
+- Addressed missed indentation in defining `across()`
+
 ## *0.2.0* — 2025-11-20
 
 ### Features

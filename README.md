@@ -73,6 +73,7 @@ As hinted at above, gaelach gains most of its utility from its dplyr-styled func
 Included are various helper functions to assist in column selection within `select()` and `mutate()`:
 1. `across()` — allows the application of a function across columns
      - Supports pattern matching on column names with `starts_with()`, `ends_with()` and `contains()` 
+     - And includes the following column transformers: `to_lower`, `to_upper`, `to_strip`, `to_title`, `to_str`, `to_int`, `to_float`, `to_date`, `to_na`, `to_zero`, `to_round` and `to_cat`
 2. `where()` — for subsetting columns based on one or more conditions
      - Supports `is_boolean`, `is_cat`, `is_float`, `is_integer`, `is_numeric`, `is_string` and `is_temporal` as boolean checks for column data types
 3. `if_else()` and `case_when()` are both available within `mutate()` statements for conditional row assignment
@@ -105,6 +106,8 @@ We can use `affiche()` on DataFrames as both a method and as a function:
 moons[["name", "parent"]].head().affiche()
     
 # Or as a function in a pipe chain
+from gaelach import _, select, head, affiche
+
 moons >> select(_.name, _.parent) \
     >> head() \
     >> affiche()
@@ -129,6 +132,8 @@ It also works on pandas Series objects:
 moons["name"].head().affiche()
 
 # Function    
+from gaelach import _, select, head, affiche
+
 moons >> select(_.name) \
     >> head() \
     >> affiche()
@@ -287,6 +292,8 @@ $ refs                           <obj> '[12]', '[13][14]…, '[13][14]…, '[15]
 We'll define a list of items to exclude inside of `filter()`, `select()` only the relevant columns, return only the first 10 rows, then use `affiche()` as a function:  
 
 ```python
+from gaelach import _, filter, select, head, affiche
+
 list = ["Earth", "Mars", "Jupiter", "Saturn", "Uranus", "Neptune", "Pluto"]
 
 moons >> filter(_.parent.not_in(list)) \
@@ -320,6 +327,8 @@ moons >> filter(_.parent.not_in(list)) \
 Natively, `not_like()` supports regex string matching:
 
 ```python
+from gaelach import _, filter, select, affiche
+
 moons >> filter(_.discovery_year.not_like("^16|17|18|19|20")) \
     >> select(_.name, _.parent, _.discovery_year) \
     >> affiche()
@@ -345,6 +354,8 @@ moons >> filter(_.discovery_year.not_like("^16|17|18|19|20")) \
 The simplest way of using `select()` is to specify columns with the underscore accessor `_`:
 
 ```python
+from gaelach import _, select, head, affiche
+
 moons >> select(_.name, _.mean_radius_km, _.discovered_by) \
     >> head() \
     >> affiche()
@@ -366,6 +377,8 @@ moons >> select(_.name, _.mean_radius_km, _.discovered_by) \
 We can also use the inverse operator `~` for de-selecting columns:
 
 ```python
+from gaelach import _, select, head, affiche
+
 moons >> select(~_.average_orbital_speed_kms, ~_.mean_radius_km, ~_.orbital_semi_major_axis_km, 
              ~_.sidereal_period_d_r__retrograde, ~_.discovery_year, ~_.year_announced, ~_.notes) \
     >> head() \
@@ -387,6 +400,8 @@ moons >> select(~_.average_orbital_speed_kms, ~_.mean_radius_km, ~_.orbital_semi
 As well as the column range operator `|` for specifying a range of columns:
 
 ```python
+from gaelach import _, select, head, affiche
+
 moons >> select(_.name | _.average_orbital_speed_kms) \
     >> head() \
     >> affiche()
@@ -407,6 +422,8 @@ moons >> select(_.name | _.average_orbital_speed_kms) \
 We can also use the unpacking operator `*` in `select()`:
 
 ```python
+from gaelach import select, head, affiche
+
 cols = ["name", "numeral", "apparent_magnitudea"]
 
 moons >> select(*cols) \
@@ -429,6 +446,8 @@ moons >> select(*cols) \
 Further, `select()` allows for various selector functions: `starts_with()`, `ends_with()` and `contains()` 
 
 ```python
+from gaelach import select, ends_with, head, affiche
+
 moons >> select(ends_with("km")) \
     >> head(5) \
     >> affiche()
@@ -449,6 +468,8 @@ moons >> select(ends_with("km")) \
 As well as using the inverse operator `~` on these helpers:
 
 ```python
+from gaelach import _, select, ends_with, head, affiche
+
 moons >> select(~(_.image | _.year_announced), ~ends_with("by")) \
     >> head() \
     >> affiche()
@@ -476,6 +497,8 @@ moons >> select(~(_.image | _.year_announced), ~ends_with("by")) \
 Intuitively, `filter()` takes one or more arguments for finding rows that match certain conditions:
 
 ```python
+from gaelach import _, filter, select, head, affiche
+
 moons >> filter(_.parent == "Saturn", _.orbital_semi_major_axis_km >= 2500000) \
     >> select(_.parent, _.orbital_semi_major_axis_km) \
     >> head() \
@@ -497,6 +520,8 @@ moons >> filter(_.parent == "Saturn", _.orbital_semi_major_axis_km >= 2500000) \
 There's also a helper function `row_contains()` for filtering for any rows that match any given value[s]:
 
 ```python
+from gaelach import _, filter, row_contains, select, head, affiche
+
 moons >> filter(row_contains("Â")) \
     >> select(_.mean_radius_km, _.discovered_by) \
     >> head(10) \
@@ -530,6 +555,8 @@ moons >> filter(row_contains("Â")) \
 Conventionally, `mutate()` can be used to either modify columns in place or create new columns:
 
 ```python
+from gaelach import _,mutate, select, distinct, head, affiche
+
 moons >> mutate(prehistoric = _.discovery_year == "Prehistoric") \
     >> select(_.name, _.discovery_year, _.prehistoric) \
     >> distinct(_.name, _.discovery_year) \
@@ -552,6 +579,7 @@ moons >> mutate(prehistoric = _.discovery_year == "Prehistoric") \
 But we can also specify `_before` or `_after` positional arguments: 
 
 ```python
+from gaelach import _, mutate, select, head, affiche
 moons >> mutate(color = None, _after = "parent") \
     >> select(_.name | _.color) \
     >> head() \
@@ -570,12 +598,15 @@ moons >> mutate(color = None, _after = "parent") \
 ╚═══════╩════════╩═══════╩═════════╩═══════╝
 ```
 
-Importantly, `mutate()` allows for applying transformations across multiple columns with `across()`:
+Importantly, `mutate()` allows for applying transformations across multiple columns with `across()`
+
+NB: This also uses `to_upper`, one of the many column transformers we have access to:
+ - `to_lower`, `to_upper`, `to_strip`, `to_title`, `to_str`, `to_int`, `to_float`, `to_date`, `to_na`, `to_zero`, `to_round` and `to_cat`
 
 ```python
-cols = ["name", "parent", "discovered_by"]
+from gaelach import _, mutate, across, to_upper, select, head, affiche
 
-to_upper = lambda x: x.str.upper()
+cols = ["name", "parent", "discovered_by"]
 
 moons >> mutate(across(cols, to_upper)) \
     >> select(*cols) \
@@ -598,9 +629,9 @@ moons >> mutate(across(cols, to_upper)) \
 We can even use the selector helpers — `starts_with()`, `ends_with()` and `contains()` — within our `across()` call:
 
 ```python
-to_numeric = lambda x: pd.to_numeric(x, errors = "coerce")
+from gaelach import _, mutate, across, ends_with, to_float, select, ends_with, head, affiche
 
-moons >> mutate(across(ends_with("km|kms"), to_numeric)) \
+moons >> mutate(across(ends_with("km|kms"), to_float)) \
     >> select(ends_with("km|kms")) \
     >> head() \
     >> affiche()
@@ -621,7 +652,7 @@ moons >> mutate(across(ends_with("km|kms"), to_numeric)) \
 We also have access to the following helper functions within `where()`: `is_numeric`, `is_integer`, `is_float`, `is_object`, `is_boolean`, `is_temporal` and `is_cat`:
 
 ```python
-to_lower = lambda x: x.str.lower()
+from gaelach import _, mutate, across, where, is_object, to_lower, select, ends_with, head, affiche
 
 moons >> mutate(across(where(is_object), to_lower)) \
     >> select(where(is_object), ~_.image, ~ends_with("km|kms")) \
@@ -644,9 +675,9 @@ moons >> mutate(across(where(is_object), to_lower)) \
 `mutate()` also allows for arithmetic operators (e.g. `+`, `*`, `/`) to be used across columns:
 
 ```python
-to_numeric = lambda x: pd.to_numeric(x, errors = "coerce")
+from gaelach import _, mutate, across, contains, to_float, select, distinct, head, affiche
 
-moons >> mutate(across(contains("year"), to_numeric)) \
+moons >> mutate(across(contains("year"), to_float)) \
     >> mutate(announcement_lag = _.year_announced - _.discovery_year, 
                 _after = "year_announced") \
     >> select(_.name, _.discovery_year | _.announcement_lag) \
@@ -670,6 +701,8 @@ moons >> mutate(across(contains("year"), to_numeric)) \
 Additionally, we can use `if_else()` for conditional column modification:
 
 ```python
+from gaelach import _, mutate, if_else, select, head, affiche
+
 moons >> mutate(
     synchronous = if_else(
         condition = _.notes.str.contains("Synchronous", case = False),
@@ -696,6 +729,8 @@ moons >> mutate(
 As well as `case_when()` for multiple conditionals:
 
 ```python
+from gaelach import _, mutate, case_when, select, distinct, head, affiche
+
 moons >> mutate(
     orbit = case_when(
         (_.notes.str.contains("Retrograde", case = False), "Retrograde"),
@@ -732,6 +767,8 @@ moons >> mutate(
 <summary>View examples</summary>
 
 ```python
+from gaelach import _, group_by, summarize, affiche
+
 moons >> group_by(_.parent) \
     >> summarize(avg_orbital_semi_major_axis_km = _.orbital_semi_major_axis_km.mean().round()) \
     >> affiche()
@@ -768,6 +805,8 @@ moons >> group_by(_.parent) \
 Unlike `summarize()`, `reframe()` in a `group_by()` creates new rows based on group summaries:
 
 ```python
+from gaelach import _, group_by, reframe, affiche
+
 moons >> group_by(_.parent) \
     >> reframe(
         avg_orbital_semi_major_axis_km = _.orbital_semi_major_axis_km.mean().round(),
@@ -809,6 +848,8 @@ Similar to `R`, we can use `pull()` to retrieve a single value or a list:
 
 
 ```python
+from gaelach import _, filter, summarize, pull
+
 # Pull the number of moons around Jupiter
 n = moons >> filter(_.parent == "Jupiter") \
     >> summarize(count = _.name.count()) \
@@ -831,6 +872,8 @@ The number of moons around Jupiter is: 97
 We can specify the type of join in the "how" argument:
 
 ```python
+from gaelach import _, join, select, affiche
+
 # First, define a new dataframe
 df = pd.DataFrame({
     "name": ["Moon", "Phobos", "Deimos", "Io", "Europa"], 
@@ -870,6 +913,8 @@ df2 = moons >> join(
 By default, `pivot_wider()` fills empty cells with `NA`:
 
 ```python
+from gaelach import _, pivot_wider
+
 moons_wide = moons >> \
     pivot_wider(names_from = _.parent, 
                   values_from=_.mean_radius_km, 
@@ -905,6 +950,8 @@ moons_wide.head(10).affiche()
 By default, `pivot_longer()` pivots all columns:
 
 ```python
+from gaelach import _, pivot_longer, filter, head, affiche
+
 # Pivot all columns except name
 moons_wide >> pivot_longer(cols = ~_.name, 
                    names_to = "parent", 
@@ -941,7 +988,9 @@ moons_wide >> pivot_longer(cols = ~_.name,
 By default, `unite()` drops the "from" columns:
 
 ```python
-moons >> unite("combined", ["name", "parent"], sep=", ") \
+from gaelach import _, unite, select, head, affiche
+
+moons >> unite("combined", ["name", "parent"], sep = ", ") \
     >> select(_.combined) \
     >> head() \
     >> affiche()
@@ -969,7 +1018,9 @@ moons >> unite("combined", ["name", "parent"], sep=", ") \
 Similarly, `separate()` drops the "from" column by default:
 
 ```python
-moons >> unite("combined", ["name", "parent"], sep=", ") \
+from gaelach import _, unite, separate, select, head, affiche
+
+moons >> unite("combined", ["name", "parent"], sep = ", ") \
     >> separate(_.combined, into = ["name", "parent"], sep=", ") \
     >> select(_.name, _.parent) \
     >> head() \
@@ -998,6 +1049,8 @@ moons >> unite("combined", ["name", "parent"], sep=", ") \
 The default behavior of `bind_cols()` is to append `_2` to columns with conflicting names:
 
 ```python
+from gaelach import _, bind_cols, select, head, affiche
+
 df = pd.DataFrame({
     "name": ["Moon", "Phobos", "Deimos", "Io", "Europa"], 
     "designation": ["Moon", "Mars I", "Mars II", "Jupiter I", "Jupiter II"],
@@ -1038,6 +1091,8 @@ moons >> bind_cols(df) \
 By default, `bind_rows()` fills missing cells with `NA`:
 
 ```python
+from gaelach import _, bind_rows, select, tail, affiche
+
 df = pd.DataFrame({
     "name": ["Moon", "Phobos", "Deimos", "Io", "Europa"], 
     "designation": ["Moon", "Mars I", "Mars II", "Jupiter I", "Jupiter II"],
@@ -1078,6 +1133,8 @@ moons >> bind_rows(df) \
 The default is 5 rows, but can be specified:
 
 ```python
+from gaelach import _, select, head, affiche
+
 moons >> select(_.parent, _.notes) \
     >> head(10) \
     >> affiche()
@@ -1110,6 +1167,8 @@ moons >> select(_.parent, _.notes) \
 Similar to `head()`, default of 5 with an optional argument:
 
 ```python
+from gaelach import _, select, tail, affiche
+
 moons >> select(_.parent, _.notes) \
     >> tail(2) \
     >> affiche()
@@ -1134,6 +1193,9 @@ moons >> select(_.parent, _.notes) \
 With one argument, `slice()` accesses rows at that position — here, the last five rows (-5):
 
 ```python
+from gaelach import _, select, slice, affiche
+
+
 moons >> select(_.name | _.numeral) \
     >> slice(-5) \
     >> affiche()
@@ -1154,6 +1216,8 @@ moons >> select(_.name | _.numeral) \
 But with two arguments, it grabs the starting position (100), followed by the number of rows (5):
 
 ```python
+from gaelach import _, select, slice, affiche
+
 moons >> select(_.name | _.numeral) \
     >> slice(100, 5) \
     >> affiche()
@@ -1181,6 +1245,8 @@ moons >> select(_.name | _.numeral) \
 By default, `sample()` returns rows without replacement:
 
 ```python
+from gaelach import _, select, sample, affiche
+
 moons >> select(_.name | _.numeral) \
     >> sample(10) \
     >> affiche()
@@ -1213,6 +1279,9 @@ moons >> select(_.name | _.numeral) \
 The default behavior of `distinct()` is application to all columns, but can be specified: 
 
 ```python
+from gaelach import _, select, distinct, head, affiche
+
+
 moons >> select(_.parent, _.numeral) \
     >> distinct(_.numeral) \
     >> head(10) \
@@ -1246,6 +1315,8 @@ moons >> select(_.parent, _.numeral) \
 By default, `arrange()` sorts ascending:
 
 ```python
+from gaelach import _, select, arrange, head, affiche
+
 moons >> select(_.name, _.orbital_semi_major_axis_km) \
     >> arrange(_.orbital_semi_major_axis_km) \
     >> head() \
@@ -1267,6 +1338,8 @@ moons >> select(_.name, _.orbital_semi_major_axis_km) \
 But we can use the `-` operator to sort descending:
 
 ```python
+from gaelach import _, select, arrange, head, affiche
+
 moons >> select(_.name, _.orbital_semi_major_axis_km) \
     >> arrange(-_.orbital_semi_major_axis_km) \
     >> head() \
@@ -1295,6 +1368,8 @@ moons >> select(_.name, _.orbital_semi_major_axis_km) \
 Like `mutate()`, we have optional `after` and `before` arguments:
 
 ```python
+from gaelach import _, relocate, select, head, affiche
+
 moons >> relocate(_.notes, _.refs, after = "name") \
     >> select(_.name | _.refs) \
     >> head() \
@@ -1324,6 +1399,8 @@ moons >> relocate(_.notes, _.refs, after = "name") \
 Like siuba, `rename()` expects `new_name = _.old_name`
 
 ```python
+from gaelach import _, rename, select, head, affiche
+
 moons >> rename(apparent_magnitude = _.apparent_magnitudea) \
     >> select(_.name, _.apparent_magnitude) \
     >> head() \
@@ -1352,11 +1429,11 @@ moons >> rename(apparent_magnitude = _.apparent_magnitudea) \
 By default, `round()` reduces all numeric columns to two decimal places — where both can be specified:
 
 ```python
+from gaelach import _, mutate, across, to_float, select, head, round, affiche
+
 cols = ["average_orbital_speed_kms", "sidereal_period_d_r__retrograde"]
 
-to_numeric = lambda x: pd.to_numeric(x, errors = "coerce")
-
-moons >> mutate(across(cols, to_numeric)) \
+moons >> mutate(across(cols, to_float)) \
     >> select(_.name, *cols) \
     >> head() \
     >> round(decimals = 0) \
@@ -1410,6 +1487,8 @@ moons.count_na().affiche()
 ```
 
 ```python
+from gaelach import _, select, drop_na
+
 # Now, we'll exclude the image column and call drop_na()
 moons_drop = moons \
     >> select(~_.image) \
@@ -1442,6 +1521,8 @@ moons_drop.count_na().affiche()
 However, we can also specify `how = "all"` — where all values in a row must be `NA` to be dropped:
 
 ```python
+from gaelach import _, select, drop_na
+
 # We'll still exclude the image column, and specify "all"
 moons_drop = moons \
     >> select(~_.image) \

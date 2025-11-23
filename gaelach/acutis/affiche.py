@@ -87,6 +87,7 @@ def affiche(self, align="left", na_color="\033[91;3m", theme="newspaper"):
     type_abbrev = {
         "string": "str",
         "categorical": "cat",
+        "category": "cat",
         "boolean": "bool",
         "object": "obj",
         "decimal": "dec",
@@ -94,7 +95,8 @@ def affiche(self, align="left", na_color="\033[91;3m", theme="newspaper"):
         "int64": "i64",
         "float32": "f32",
         "float64": "f64",
-        "datetime64[ns]": "datetime"
+        "datetime64[ns]": "datetime",
+        "timedelta64[ns]": "timedelta"
     }
 
     col_types = [type_abbrev.get(dtype.lower(), dtype) for dtype in col_types]
@@ -296,13 +298,18 @@ def affiche(align="left", na_color="\033[91;3m", theme="newspaper"):
         
         # Abbreviate common type names
         type_abbrev = {
-            "object": "obj",
-            "int64": "int64",
-            "float64": "float64",
-            "bool": "bool",
-            "datetime64[ns]": "datetime",
+            "string": "str",
+            "categorical": "cat",
             "category": "cat",
-            "string": "str"
+            "boolean": "bool",
+            "object": "obj",
+            "decimal": "dec",
+            "int32": "i32",
+            "int64": "i64",
+            "float32": "f32",
+            "float64": "f64",
+            "datetime64[ns]": "datetime",
+            "timedelta64[ns]": "timedelta"
         }
 
         col_types = [type_abbrev.get(str(dtype), str(dtype)) for dtype in df.dtypes]

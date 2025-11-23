@@ -65,6 +65,7 @@ def glimpse(
         type_abbrev = {
             "string": "str",
             "categorical": "cat",
+            "category": "cat",
             "boolean": "bool",
             "object": "obj",
             "decimal": "dec",
@@ -72,7 +73,8 @@ def glimpse(
             "int64": "i64",
             "float32": "f32",
             "float64": "f64",
-            "datetime64[ns]": "datetime"
+            "datetime64[ns]": "dttm",
+            "timedelta64[ns]": "tmdelta"
         }
         
         dtype_str = type_abbrev.get(dtype_str.lower(), dtype_str)
@@ -109,12 +111,12 @@ def glimpse(
     output.write(f"Rows: {len(self)}\nColumns: {len(self.columns)}\n")
     
     for col_name, dtype_str, values in data:
-        # Format values, replacing None with "null" and truncating long values
+        # Format values, replacing None with "NA" and truncating long values
         formatted_vals = []
         for v in values:
             if v is None:
                 # ANSI codes: \033[3;31m = red italic, \033[0m = reset
-                formatted_vals.append("\033[3;31mnull\033[0m")
+                formatted_vals.append("\033[3;31mNA\033[0m")
             else:
                 # Truncate if value exceeds max_value_length
                 if len(v) > max_value_length:
