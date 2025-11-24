@@ -51,7 +51,7 @@ from gaelach.utils.lambdas import to_lower, to_upper, to_strip, to_title, to_str
    to_float, to_date, to_na, to_zero, to_round, to_cat
     
 # set version
-__version__ = "0.2.1"
+__version__ = "0.2.2"
 
 # add to primary import 
 __all__ = ['_', 'Symbolic', 'select', 'mutate', 'filter', 'across', 'where', 'is_boolean', 

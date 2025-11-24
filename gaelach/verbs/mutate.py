@@ -108,29 +108,13 @@ def _evaluate_expression(expr, df):
     """Helper to evaluate symbolic expressions into actual values."""
     # Handle callables (like if_else, case_when results)
     if callable(expr):
-        return expr(df)
-    elif isinstance(expr, ChainedSymbolicAttr):
-        # Start with the base column
-        result = df[expr.name]
-        current = expr
-        operations = []
-        
-        # Collect all operations in the chain
-        while isinstance(current, ChainedSymbolicAttr):
-            operations.append((current.method_name, current.args, current.kwargs))
-            current = current.parent
-        
-        # Apply operations in reverse order
-        for method_name, args, kw in reversed(operations):
-            # Check if this is an accessor property (str, dt, cat)
-            if method_name in ['str', 'dt', 'cat'] and len(args) == 0 and len(kw) == 0:
-                # Get the accessor, don't call it
-                result = getattr(result, method_name)
-            elif hasattr(result, method_name):
-                method = getattr(result, method_name)
-                result = method(*args, **kw)
-        
+        result = expr(df)
+        # If the callable returned something that needs evaluation, evaluate it
+        if isinstance(result, (ChainedSymbolicAttr, SymbolicAttr, BinaryOperation, ColumnExpression)):
+            return _evaluate_expression(result, df)
         return result
+    elif isinstance(expr, ChainedSymbolicAttr):
+        return expr._evaluate(df)
     elif isinstance(expr, SymbolicAttr):
         return df[expr.name]
     elif isinstance(expr, BinaryOperation):
@@ -199,9 +183,10 @@ def mutate(*args, _before=None, _after=None, **kwargs):
         
         # Apply all the mutations
         for col_name, value in expanded_kwargs.items():
+
             # Evaluate the expression first
             evaluated_value = _evaluate_expression(value, result)
-            
+               
             # Handle lists/arrays by converting to pandas Series
             if isinstance(evaluated_value, pd.DataFrame):
                 # If extract() returned a DataFrame with one column, use that column

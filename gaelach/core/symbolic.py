@@ -398,12 +398,17 @@ class ChainedSymbolicAttr:
         if self.method_name in ['str', 'dt', 'cat']:
             # Return the accessor itself, don't call it
             return getattr(col_data, self.method_name)
-    
-        # If col_data is already an accessor, get the method from it
+
+        # If col_data is already an accessor, get the method/property from it
         if hasattr(col_data, '__class__') and col_data.__class__.__name__ in ['StringMethods', 'DatetimeProperties', 'CategoricalAccessor']:
-            method = getattr(col_data, self.method_name)
-            return method(*self.args, **self.kwargs)
-    
+            attr = getattr(col_data, self.method_name)
+            # Check if it's a property or method
+            if callable(attr):
+                return attr(*self.args, **self.kwargs)
+            else:
+                # It's a property, just return it
+                return attr
+
         # Normal method call
         method = getattr(col_data, self.method_name)
         return method(*self.args, **self.kwargs)
