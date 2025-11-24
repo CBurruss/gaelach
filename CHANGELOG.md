@@ -7,7 +7,7 @@ All notable changes to `gaelach` will be documented in this changelog
 ### Features
 - Added `to_float` and `to_cat` to lambda transformer functions
 
-### Imrovements
+### Improvements
 - `affiche()` and `glimpse()` have extra data type abbreviations
 
 ### Fixes
