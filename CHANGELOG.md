@@ -5,7 +5,7 @@ All notable changes to `gaelach` will be documented in this changelog
 ## *0.2.2* — 2025-11-23
 
 ### Fixes
-- 'mutate()` now handles the `dt` accessor properly
+- `mutate()` now handles the `dt` accessor properly
 
 ## *0.2.1* — 2025-11-22
 
